@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Akun Belajar.id - SMP Eka Tjipta Semilar</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- SheetJS (XLSX Parser for Excel uploads) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- QRCode JS Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            800: '#0c4a6e',
+                            900: '#0f3d59',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        .custom-shadow {
+            box-shadow: 0 20px 40px -15px rgba(2, 132, 199, 0.12);
+        }
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+        }
+        .print-only { display: none; }
+    </style>
+</head>
+<body class="text-slate-800 flex flex-col min-h-screen">
+
+    <header class="bg-gradient-to-r from-brand-800 via-brand-700 to-brand-900 text-white shadow-lg no-print">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center border border-white/20 shadow-inner">
+                    <i class="fa-solid fa-graduation-cap text-2xl text-amber-300"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-xl md:text-2xl tracking-tight leading-tight">SMP Eka Tjipta Semilar</h1>
+                    <p class="text-xs text-brand-100 font-medium">Portal Pengambilan Akun & Sandi Belajar.id (2026/2027)</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 bg-white/10 p-1.5 rounded-xl border border-white/15">
+                <button id="tabStudentBtn" onclick="switchTab('student')" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 bg-white text-brand-800 shadow-md">
+                    <i class="fa-solid fa-user-graduate mr-2"></i>Pencarian Siswa
+                </button>
+                <button id="tabAdminBtn" onclick="switchTab('admin')" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 text-white hover:bg-white/10">
+                    <i class="fa-solid fa-user-shield mr-2"></i>Kelola Data (Admin)
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full no-print pointer-events-none"></div>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-grow max-w-5xl w-full mx-auto p-4 md:p-6 my-4">
+
+        <!-- TAB 1: STUDENT VIEW -->
+        <section id="studentTab" class="space-y-6">
+            <!-- Hero Banner -->
+            <div class="glass-card rounded-2xl p-6 md:p-8 text-center relative overflow-hidden custom-shadow">
+                <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-brand-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="max-w-2xl mx-auto space-y-3">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-brand-50 text-brand-700 border border-brand-100">
+                        <i class="fa-solid fa-qrcode text-brand-600"></i> Scan QR & Cari Akun
+                    </span>
+                    <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900">Temukan Akun Belajar.id Anda</h2>
+                    <p class="text-slate-600 text-sm md:text-base">
+                        Masukkan nama lengkap Anda sesuai data pendaftaran sekolah untuk menerima alamat email dan kata sandi akses Google Classroom & Belajar.id.
+                    </p>
+                </div>
+
+                <div class="mt-8 max-w-xl mx-auto relative">
+                    <div class="space-y-3">
+                        <div class="relative">
+                            <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg"></i>
+                            <input 
+                                type="text" 
+                                id="studentSearchInput" 
+                                placeholder="Ketik nama lengkap siswa..." 
+                                autocomplete="off"
+                                class="w-full pl-12 pr-10 py-4 bg-white rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 outline-none text-slate-800 font-medium text-base md:text-lg transition-all shadow-sm"
+                            >
+                            <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                <i class="fa-solid fa-circle-xmark text-lg"></i>
+                            </button>
+
+                            <!-- Autocomplete Dropdown Suggestions -->
+                            <div id="autocompleteList" class="hidden absolute left-0 right-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-slate-200 z-30 max-h-60 overflow-y-auto divide-y divide-slate-100 text-left">
+                            </div>
+                        </div>
+
+                        <!-- Class filter optional -->
+                        <div class="flex flex-wrap items-center justify-between gap-3 text-sm">
+                            <div class="flex items-center gap-2 text-slate-500">
+                                <i class="fa-solid fa-filter text-xs"></i>
+                                <span>Filter Kelas:</span>
+                                <select id="classFilterSelect" class="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-slate-700 font-medium outline-none focus:border-brand-500">
+                                    <option value="">Semua Kelas</option>
+                                </select>
+                            </div>
+                            <span id="totalStudentsBadge" class="text-xs text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full font-semibold">
+                                Memuat data...
+                            </span>
+                        </div>
+
+                        <button 
+                            onclick="performStudentSearch()" 
+                            class="w-full py-4 bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800 text-white rounded-xl font-bold text-base shadow-lg hover:shadow-brand-500/25 transition-all duration-200 flex items-center justify-center gap-2"
+                        >
+                            <i class="fa-solid fa-paper-plane"></i> Tampilkan Email & Kata Sandi
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RESULT CARD (Hidden by default) -->
+            <div id="resultCard" class="hidden glass-card rounded-2xl p-6 md:p-8 border-2 border-brand-500/30 custom-shadow transition-all duration-300">
+                <div class="flex items-center justify-between border-b border-slate-200 pb-4 mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold text-emerald-600 uppercase tracking-wider">Data Ditemukan</span>
+                            <h3 id="resStudentName" class="text-xl md:text-2xl font-extrabold text-slate-900">Nama Siswa</h3>
+                        </div>
+                    </div>
+                    <span id="resStudentClass" class="bg-brand-100 text-brand-800 font-bold px-3 py-1 rounded-lg text-sm border border-brand-200">
+                        Kelas -
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <!-- Email Card -->
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                                <i class="fa-solid fa-envelope text-brand-600 mr-1"></i> Email Belajar.id
+                            </span>
+                            <div id="resStudentEmail" class="font-mono font-bold text-slate-900 text-base md:text-lg break-all">
+                                -
+                            </div>
+                        </div>
+                        <button onclick="copyToClipboard('resStudentEmail', 'Email')" class="mt-3 w-full py-2 px-3 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-lg border border-slate-300 transition flex items-center justify-center gap-2 shadow-sm">
+                            <i class="fa-regular fa-copy"></i> Salin Email
+                        </button>
+                    </div>
+
+                    <!-- Password Card -->
+                    <div class="bg-amber-50/60 rounded-xl p-4 border border-amber-200/80 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-xs font-bold text-amber-800 uppercase tracking-wider">
+                                    <i class="fa-solid fa-key text-amber-600 mr-1"></i> Kata Sandi Awal
+                                </span>
+                                <button onclick="togglePasswordVisibility()" class="text-xs font-semibold text-amber-700 hover:underline flex items-center gap-1">
+                                    <i id="pwdEyeIcon" class="fa-solid fa-eye"></i> <span id="pwdEyeText">Lihat</span>
+                                </button>
+                            </div>
+                            <div id="resStudentPassword" class="font-mono font-bold text-slate-900 text-base md:text-lg tracking-wider">
+                                ••••••••••
+                            </div>
+                        </div>
+                        <button onclick="copyToClipboard('resStudentPasswordActual', 'Kata Sandi')" class="mt-3 w-full py-2 px-3 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-lg transition flex items-center justify-center gap-2 shadow-sm">
+                            <i class="fa-regular fa-copy"></i> Salin Kata Sandi
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Instructions box -->
+                <div class="bg-blue-50/70 rounded-xl p-4 border border-blue-200 text-xs text-blue-900 space-y-2">
+                    <p class="font-bold text-sm flex items-center gap-2 text-blue-900">
+                        <i class="fa-solid fa-circle-info text-brand-600"></i> Panduan Login Pertama Kali:
+                    </p>
+                    <ol class="list-decimal list-inside space-y-1 text-slate-700 font-medium pl-1">
+                        <li>Buka aplikasi **Gmail** atau situs web <a href="https://accounts.google.com" target="_blank" class="text-brand-600 font-bold underline">accounts.google.com</a>.</li>
+                        <li>Masukkan **Email Belajar.id** dan **Kata Sandi** di atas.</li>
+                        <li>Saat login pertama kali, buat kata sandi baru yang mudah diingat tetapi aman.</li>
+                        <li>Simpan kata sandi baru Anda dan jangan pernah membagikannya kepada orang lain.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div id="noResultCard" class="hidden glass-card rounded-2xl p-8 text-center space-y-4 border border-red-200">
+                <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto text-2xl">
+                    <i class="fa-solid fa-user-slash"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900">Data Siswa Tidak Ditemukan</h3>
+                    <p class="text-slate-600 text-sm max-w-md mx-auto mt-1">
+                        Pastikan ejaan nama sesuai dengan yang terdaftar di sekolah. Coba periksa huruf atau filter kelas.
+                    </p>
+                </div>
+                <button onclick="clearSearch()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold rounded-lg transition">
+                    Coba Pencarian Lain
+                </button>
+            </div>
+        </section>
+
+        <!-- TAB 2: ADMIN VIEW -->
+        <section id="adminTab" class="hidden space-y-6">
+
+            <!-- PIN Protection Screen -->
+            <div id="adminAuthLock" class="glass-card rounded-2xl p-8 max-w-md mx-auto text-center space-y-4 custom-shadow">
+                <div class="w-16 h-16 bg-brand-100 text-brand-700 rounded-2xl flex items-center justify-center mx-auto text-2xl shadow-inner">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h2 class="text-xl font-extrabold text-slate-900">Akses Pengelola Data</h2>
+                <p class="text-xs text-slate-500">Masukkan PIN Admin untuk mengunggah file Excel `Belajar Id 20262027.xlsx` atau mengedit data.</p>
+                <div class="space-y-3">
+                    <input 
+                        type="password" 
+                        id="adminPinInput" 
+                        placeholder="Masukkan PIN Admin (Default: 2026)" 
+                        class="w-full px-4 py-3 bg-white rounded-xl border border-slate-300 focus:border-brand-500 text-center text-lg tracking-widest outline-none font-bold"
+                    >
+                    <button onclick="verifyAdminPin()" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl transition shadow">
+                        Buka Panel Admin
+                    </button>
+                </div>
+            </div>
+
+            <!-- Admin Content (Hidden until PIN verified) -->
+            <div id="adminPanelContent" class="hidden space-y-6">
+                <!-- Excel Upload Box -->
+                <div class="glass-card rounded-2xl p-6 md:p-8 space-y-4 border border-brand-200">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 pb-4">
+                        <div>
+                            <span class="bg-brand-100 text-brand-800 text-xs font-bold px-2.5 py-1 rounded">Import Excel</span>
+                            <h3 class="text-xl font-extrabold text-slate-900 mt-1">Unggah Excel `Belajar Id 20262027.xlsx`</h3>
+                            <p class="text-xs text-slate-500">Impor data nama, email, kata sandi, dan kelas secara otomatis dari spreadsheet file Excel sekolah.</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="loadSampleData()" class="px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-lg text-xs font-bold transition">
+                                <i class="fa-solid fa-rotate-left mr-1"></i> Muat Contoh Data
+                            </button>
+                            <button onclick="downloadSampleTemplate()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-lg text-xs font-bold transition">
+                                <i class="fa-solid fa-download mr-1"></i> Unduh Format Excel
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Drag & Drop Zone -->
+                    <div 
+                        id="dropZone"
+                        onclick="document.getElementById('excelFileInput').click()"
+                        class="border-2 border-dashed border-slate-300 hover:border-brand-500 bg-slate-50/50 hover:bg-brand-50/30 rounded-xl p-8 text-center cursor-pointer transition-all duration-200"
+                    >
+                        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleExcelUpload(event)">
+                        <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto text-2xl mb-3 shadow-sm">
+                            <i class="fa-solid fa-file-excel"></i>
+                        </div>
+                        <p class="font-bold text-slate-800 text-base">Klik atau Tarik File Excel Ke Sini</p>
+                        <p class="text-xs text-slate-500 mt-1">Mendukung format .xlsx, .xls, .csv (contoh: Belajar Id 20262027.xlsx)</p>
+                    </div>
+
+                    <!-- Progress/Status -->
+                    <div id="uploadStatus" class="hidden p-3 rounded-lg text-xs font-bold text-center"></div>
+                </div>
+
+                <!-- QR CODE GENERATOR FOR SCHOOL BULLETIN BOARD -->
+                <div class="glass-card rounded-2xl p-6 md:p-8 space-y-4">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 pb-4">
+                        <div>
+                            <span class="bg-purple-100 text-purple-800 text-xs font-bold px-2.5 py-1 rounded">Fitur Cetak Barcode</span>
+                            <h3 class="text-xl font-extrabold text-slate-900 mt-1">QR Code Pengambilan Akun</h3>
+                            <p class="text-xs text-slate-500">Cetak poster QR Code ini untuk ditempel di papan pengumuman atau kelas agar siswa dapat langsung scan.</p>
+                        </div>
+                        <button onclick="window.print()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition shadow flex items-center gap-2">
+                            <i class="fa-solid fa-print"></i> Cetak Poster QR
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                        <div class="md:col-span-1 flex flex-col items-center justify-center p-4 bg-white rounded-xl border border-slate-200">
+                            <div id="qrcode" class="p-2 bg-white rounded"></div>
+                            <p class="text-xs font-bold text-slate-600 mt-2 text-center" id="qrUrlLabel"></p>
+                        </div>
+                        <div class="md:col-span-2 space-y-3">
+                            <label class="text-xs font-bold text-slate-700 block">Tautan Web Aplikasi saat ini:</label>
+                            <input type="text" id="appUrlInput" class="w-full px-3 py-2 bg-slate-100 rounded-lg border text-xs font-mono text-slate-800" readonly>
+                            <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-900 space-y-1">
+                                <p class="font-bold"><i class="fa-solid fa-lightbulb"></i> Tips untuk Sekolah:</p>
+                                <p>Siswa dapat memindai QR Code ini menggunakan kamera HP untuk langsung membuka halaman pencarian nama tanpa mengetik alamat web.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DATASET TABLE -->
+                <div class="glass-card rounded-2xl p-6 md:p-8 space-y-4">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h3 class="text-xl font-extrabold text-slate-900">Daftar Akun Siswa Terdaftar</h3>
+                            <p class="text-xs text-slate-500">Total <span id="tableTotalCount" class="font-bold text-brand-600">0</span> siswa berada dalam sistem database lokal browser.</p>
+                        </div>
+                        <div class="flex items-center gap-2 w-full md:w-auto">
+                            <input type="text" id="adminTableSearch" placeholder="Cari di tabel..." oninput="filterAdminTable()" class="px-3 py-2 border rounded-lg text-xs w-full md:w-48 outline-none focus:border-brand-500">
+                            <button onclick="addNewStudentPrompt()" class="px-3 py-2 bg-brand-600 text-white rounded-lg text-xs font-bold hover:bg-brand-700 transition whitespace-nowrap">
+                                <i class="fa-solid fa-plus mr-1"></i> Tambah Siswa
+                            </button>
+                            <button onclick="clearAllData()" class="px-3 py-2 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg text-xs font-bold transition whitespace-nowrap">
+                                <i class="fa-solid fa-trash mr-1"></i> Hapus Semua
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-xl border border-slate-200 max-h-96">
+                        <table class="w-full text-left text-xs text-slate-700">
+                            <thead class="bg-slate-100 text-slate-900 uppercase font-bold sticky top-0 border-b border-slate-200">
+                                <tr>
+                                    <th class="p-3">No</th>
+                                    <th class="p-3">Nama Lengkap</th>
+                                    <th class="p-3">Kelas</th>
+                                    <th class="p-3">Email Belajar.id</th>
+                                    <th class="p-3">Kata Sandi</th>
+                                    <th class="p-3 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentTableBody" class="divide-y divide-slate-200 bg-white">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- PRINT ONLY SECTION FOR QR POSTER -->
+    <section class="print-only p-8 text-center space-y-6">
+        <div class="border-4 border-slate-800 p-8 rounded-2xl max-w-xl mx-auto space-y-6">
+            <h1 class="text-3xl font-black uppercase text-slate-900 tracking-tight">SMP EKA TJIPTA SEMILAR</h1>
+            <p class="text-lg font-bold text-slate-700">PENGAMBILAN AKUN & KATA SANDI BELAJAR.ID</p>
+            <hr class="border-2 border-slate-800">
+            <p class="text-sm text-slate-600 font-medium">Pindai Barcode / QR Code di bawah ini menggunakan kamera Ponsel Anda untuk mengecek Email & Kata Sandi Pembelajaran:</p>
+            
+            <div id="printQrCodeContainer" class="flex justify-center py-4"></div>
+
+            <div class="bg-slate-100 p-4 rounded-xl border border-slate-300">
+                <p class="text-xs font-bold text-slate-800">PETUNJUK SISWA:</p>
+                <ol class="text-xs text-slate-700 text-left list-decimal list-inside mt-2 space-y-1">
+                    <li>Scan QR Code di atas.</li>
+                    <li>Ketikkan **Nama Lengkap** sesuai data pendaftaran.</li>
+                    <li>Tekan tombol **Tampilkan Email & Kata Sandi**.</li>
+                    <li>Catat atau salin email dan sandi untuk login di Gmail/Google Classroom.</li>
+                </ol>
+            </div>
+            <p class="text-xs font-bold text-slate-500">Tahun Ajaran 2026 / 2027 - SMP Eka Tjipta Semilar</p>
+        </div>
+    </section>
+
+    <!-- CUSTOM MODAL DIALOG -->
+    <div id="customModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 no-print">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <h3 id="modalTitle" class="text-lg font-extrabold text-slate-900">Judul Modal</h3>
+            <div id="modalBody" class="text-sm text-slate-600 space-y-3"></div>
+            <div class="flex justify-end gap-2 pt-2" id="modalFooter">
+                <button onclick="closeModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-lg text-xs">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Default Sample Data (SMP Eka Tjipta Semilar)
+        const SAMPLE_STUDENTS = [
+            { id: 1, name: "Ahmad Rizky Pratama", class: "7A", email: "ahmad.rizky77@smp.belajar.id", password: "Smpeka#20261" },
+            { id: 2, name: "Anisa Rahmawati", class: "7A", email: "anisa.rahmawati12@smp.belajar.id", password: "Smpeka#20262" },
+            { id: 3, name: "Budi Santoso", class: "7B", email: "budi.santoso03@smp.belajar.id", password: "Smpeka#20263" },
+            { id: 4, name: "Citra Dewi Lestari", class: "7B", email: "citra.dewi88@smp.belajar.id", password: "Smpeka#20264" },
+            { id: 5, name: "Deni Kurniawan", class: "8A", email: "deni.kurniawan45@smp.belajar.id", password: "Smpeka#20265" },
+            { id: 6, name: "Eka Putri Semilar", class: "8A", email: "eka.putri99@smp.belajar.id", password: "Smpeka#20266" },
+            { id: 7, name: "Fajar Nugraha", class: "8B", email: "fajar.nugraha11@smp.belajar.id", password: "Smpeka#20267" },
+            { id: 8, name: "Gita Gutawa", class: "9A", email: "gita.gutawa22@smp.belajar.id", password: "Smpeka#20268" },
+            { id: 9, name: "Hendik Wijaya", class: "9B", email: "hendik.wijaya33@smp.belajar.id", password: "Smpeka#20269" }
+        ];
+
+        let studentDataset = [];
+        let currentFoundStudent = null;
+        let isPasswordVisible = false;
+        let isAdminAuthenticated = false;
+
+        // Initialize App
+        window.onload = function() {
+            loadDatasetFromStorage();
+            setupSearchAutocomplete();
+            populateClassFilter();
+            generateQRCode();
+            updateTotalBadge();
+        };
+
+        function loadDatasetFromStorage() {
+            const stored = localStorage.getItem('smp_eka_tjipta_students');
+            if (stored) {
+                try {
+                    studentDataset = JSON.parse(stored);
+                } catch (e) {
+                    studentDataset = [...SAMPLE_STUDENTS];
+                }
+            } else {
+                studentDataset = [...SAMPLE_STUDENTS];
+                saveDatasetToStorage();
+            }
+        }
+
+        function saveDatasetToStorage() {
+            localStorage.setItem('smp_eka_tjipta_students', JSON.stringify(studentDataset));
+            updateTotalBadge();
+            if (isAdminAuthenticated) {
+                renderAdminTable();
+            }
+            populateClassFilter();
+        }
+
+        function updateTotalBadge() {
+            const badge = document.getElementById('totalStudentsBadge');
+            if (badge) {
+                badge.innerText = `${studentDataset.length} Siswa Terdaftar`;
+            }
+        }
+
+        function switchTab(tab) {
+            const studentTab = document.getElementById('studentTab');
+            const adminTab = document.getElementById('adminTab');
+            const studentBtn = document.getElementById('tabStudentBtn');
+            const adminBtn = document.getElementById('tabAdminBtn');
+
+            if (tab === 'student') {
+                studentTab.classList.remove('hidden');
+                adminTab.classList.add('hidden');
+                studentBtn.className = "px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 bg-white text-brand-800 shadow-md";
+                adminBtn.className = "px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 text-white hover:bg-white/10";
+            } else {
+                studentTab.classList.add('hidden');
+                adminTab.classList.remove('hidden');
+                adminBtn.className = "px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 bg-white text-brand-800 shadow-md";
+                studentBtn.className = "px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 text-white hover:bg-white/10";
+            }
+        }
+
+        function setupSearchAutocomplete() {
+            const input = document.getElementById('studentSearchInput');
+            const clearBtn = document.getElementById('clearSearchBtn');
+            const list = document.getElementById('autocompleteList');
+
+            input.addEventListener('input', function() {
+                const query = this.value.trim().toLowerCase();
+                if (query.length > 0) {
+                    clearBtn.classList.remove('hidden');
+                } else {
+                    clearBtn.classList.add('hidden');
+                    list.classList.add('hidden');
+                    return;
+                }
+
+                const selectedClass = document.getElementById('classFilterSelect').value;
+                const matches = studentDataset.filter(s => {
+                    const matchName = s.name.toLowerCase().includes(query);
+                    const matchClass = selectedClass ? s.class === selectedClass : true;
+                    return matchName && matchClass;
+                }).slice(0, 6);
+
+                if (matches.length > 0) {
+                    list.innerHTML = matches.map(s => `
+                        <div onclick="selectAutocomplete('${s.name.replace(/'/g, "\\'")}')" class="p-3 hover:bg-brand-50 cursor-pointer flex justify-between items-center transition">
+                            <span class="font-semibold text-slate-800">${highlightMatch(s.name, query)}</span>
+                            <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-bold">${s.class || 'Siswa'}</span>
+                        </div>
+                    `).join('');
+                    list.classList.remove('hidden');
+                } else {
+                    list.classList.add('hidden');
+                }
+            });
+
+            // Close suggestions on click outside
+            document.addEventListener('click', function(e) {
+                if (!input.contains(e.target) && !list.contains(e.target)) {
+                    list.classList.add('hidden');
+                }
+            });
+
+            // Enter key trigger search
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    list.classList.add('hidden');
+                    performStudentSearch();
+                }
+            });
+        }
+
+        function highlightMatch(text, query) {
+            const idx = text.toLowerCase().indexOf(query.toLowerCase());
+            if (idx === -1) return text;
+            return text.substring(0, idx) + '<strong class="text-brand-600 underline">' + text.substring(idx, idx + query.length) + '</strong>' + text.substring(idx + query.length);
+        }
+
+        function selectAutocomplete(name) {
+            document.getElementById('studentSearchInput').value = name;
+            document.getElementById('autocompleteList').classList.add('hidden');
+            performStudentSearch();
+        }
+
+        function clearSearch() {
+            document.getElementById('studentSearchInput').value = '';
+            document.getElementById('clearSearchBtn').classList.add('hidden');
+            document.getElementById('autocompleteList').classList.add('hidden');
+            document.getElementById('resultCard').classList.add('hidden');
+            document.getElementById('noResultCard').classList.add('hidden');
+        }
+
+        function populateClassFilter() {
+            const select = document.getElementById('classFilterSelect');
+            const classes = [...new Set(studentDataset.map(s => s.class).filter(Boolean))].sort();
+            select.innerHTML = '<option value="">Semua Kelas</option>' + 
+                classes.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+
+        function performStudentSearch() {
+            const inputVal = document.getElementById('studentSearchInput').value.trim().toLowerCase();
+            const selectedClass = document.getElementById('classFilterSelect').value;
+
+            if (!inputVal) {
+                showToast('Ketik nama lengkap Anda terlebih dahulu!', 'warning');
+                return;
+            }
+
+            // Search logic (Exact or Fuzzy Match)
+            const matched = studentDataset.find(s => {
+                const nameMatch = s.name.toLowerCase() === inputVal || s.name.toLowerCase().includes(inputVal);
+                const classMatch = selectedClass ? s.class === selectedClass : true;
+                return nameMatch && classMatch;
+            });
+
+            const resultCard = document.getElementById('resultCard');
+            const noResultCard = document.getElementById('noResultCard');
+
+            if (matched) {
+                currentFoundStudent = matched;
+                isPasswordVisible = false;
+
+                document.getElementById('resStudentName').innerText = matched.name;
+                document.getElementById('resStudentClass').innerText = matched.class ? `Kelas ${matched.class}` : 'SMP Eka Tjipta';
+                document.getElementById('resStudentEmail').innerText = matched.email;
+                
+                // Hide password initially
+                document.getElementById('resStudentPassword').innerText = "••••••••••";
+                document.getElementById('pwdEyeIcon').className = "fa-solid fa-eye";
+                document.getElementById('pwdEyeText').innerText = "Lihat";
+
+                resultCard.classList.remove('hidden');
+                noResultCard.classList.add('hidden');
+
+                // Trigger confetti celebration effect
+                try {
+                    confetti({
+                        particleCount: 50,
+                        spread: 60,
+                        origin: { y: 0.7 }
+                    });
+                } catch(e) {}
+
+                showToast(`Data untuk ${matched.name} berhasil ditemukan!`, 'success');
+            } else {
+                currentFoundStudent = null;
+                resultCard.classList.add('hidden');
+                noResultCard.classList.remove('hidden');
+                showToast('Data tidak ditemukan. Silakan periksa ejaan nama.', 'error');
+            }
+        }
+
+        function togglePasswordVisibility() {
+            if (!currentFoundStudent) return;
+            const pwdElement = document.getElementById('resStudentPassword');
+            const eyeIcon = document.getElementById('pwdEyeIcon');
+            const eyeText = document.getElementById('pwdEyeText');
+
+            if (isPasswordVisible) {
+                pwdElement.innerText = "••••••••••";
+                eyeIcon.className = "fa-solid fa-eye";
+                eyeText.innerText = "Lihat";
+                isPasswordVisible = false;
+            } else {
+                pwdElement.innerText = currentFoundStudent.password;
+                eyeIcon.className = "fa-solid fa-eye-slash";
+                eyeText.innerText = "Sembunyikan";
+                isPasswordVisible = true;
+            }
+        }
+
+        function copyToClipboard(elementIdOrText, label) {
+            let textToCopy = "";
+            if (elementIdOrText === 'resStudentPasswordActual') {
+                textToCopy = currentFoundStudent ? currentFoundStudent.password : '';
+            } else {
+                const el = document.getElementById(elementIdOrText);
+                textToCopy = el ? el.innerText.trim() : elementIdOrText;
+            }
+
+            if (!textToCopy) return;
+
+            // Use document.execCommand fallback for iframe safety
+            const dummy = document.createElement("textarea");
+            document.body.appendChild(dummy);
+            dummy.value = textToCopy;
+            dummy.select();
+            document.execCommand("copy");
+            document.body.removeChild(dummy);
+
+            showToast(`${label} berhasil disalin ke clipboard!`, 'success');
+        }
+
+        function verifyAdminPin() {
+            const pin = document.getElementById('adminPinInput').value;
+            if (pin === '2026' || pin === 'admin') {
+                isAdminAuthenticated = true;
+                document.getElementById('adminAuthLock').classList.add('hidden');
+                document.getElementById('adminPanelContent').classList.remove('hidden');
+                renderAdminTable();
+                showToast('Akses admin berhasil dibuka', 'success');
+            } else {
+                showToast('PIN Admin salah. Coba gunakan: 2026', 'error');
+            }
+        }
+
+        function handleExcelUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const statusEl = document.getElementById('uploadStatus');
+            statusEl.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-emerald-100', 'text-emerald-700');
+            statusEl.classList.add('bg-blue-100', 'text-blue-700');
+            statusEl.innerText = "Membaca file Excel Belajar.id...";
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                    if (json.length < 2) {
+                        throw new Error("File Excel kosong atau format tidak sesuai.");
+                    }
+
+                    // Parse Headers to find relevant column indexes
+                    const headers = json[0].map(h => String(h || '').trim().toLowerCase());
+                    
+                    let nameIdx = headers.findIndex(h => h.includes('nama') || h.includes('siswa') || h.includes('peserta'));
+                    let emailIdx = headers.findIndex(h => h.includes('email') || h.includes('akun') || h.includes('belajar'));
+                    let pwdIdx = headers.findIndex(h => h.includes('sandi') || h.includes('password') || h.includes('pass'));
+                    let classIdx = headers.findIndex(h => h.includes('kelas') || h.includes('rombel'));
+
+                    // Fallbacks if header names differ
+                    if (nameIdx === -1) nameIdx = 0;
+                    if (emailIdx === -1) emailIdx = 1;
+                    if (pwdIdx === -1) pwdIdx = 2;
+                    if (classIdx === -1) classIdx = 3;
+
+                    const newStudents = [];
+                    for (let i = 1; i < json.length; i++) {
+                        const row = json[i];
+                        if (!row || row.length === 0) continue;
+
+                        const name = row[nameIdx] ? String(row[nameIdx]).trim() : '';
+                        const email = row[emailIdx] ? String(row[emailIdx]).trim() : '';
+                        const password = row[pwdIdx] ? String(row[pwdIdx]).trim() : '';
+                        const cls = row[classIdx] ? String(row[classIdx]).trim() : 'SMP';
+
+                        if (name && (email || password)) {
+                            newStudents.push({
+                                id: Date.now() + i,
+                                name: name,
+                                class: cls,
+                                email: email || `${name.toLowerCase().replace(/\s+/g, '.')}@smp.belajar.id`,
+                                password: password || 'Smpeka#2026'
+                            });
+                        }
+                    }
+
+                    if (newStudents.length > 0) {
+                        studentDataset = newStudents;
+                        saveDatasetToStorage();
+                        statusEl.className = "p-3 rounded-lg text-xs font-bold text-center bg-emerald-100 text-emerald-800";
+                        statusEl.innerText = `Berhasil mengimpor ${newStudents.length} data siswa dari ${file.name}!`;
+                        showToast(`Impor Berhasil: ${newStudents.length} data siswa disimpan.`, 'success');
+                    } else {
+                        throw new Error("Tidak ada data siswa yang valid ditemukan di dalam file.");
+                    }
+
+                } catch (err) {
+                    statusEl.className = "p-3 rounded-lg text-xs font-bold text-center bg-red-100 text-red-700";
+                    statusEl.innerText = `Gagal membaca Excel: ${err.message}`;
+                    showToast(`Error: ${err.message}`, 'error');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function loadSampleData() {
+            studentDataset = [...SAMPLE_STUDENTS];
+            saveDatasetToStorage();
+            showToast('Contoh data SMP Eka Tjipta Semilar dimuat ulang.', 'info');
+        }
+
+        function downloadSampleTemplate() {
+            const templateData = [
+                ["Nama Lengkap", "Kelas", "Email Belajar.id", "Kata Sandi Awal"],
+                ["Ahmad Rizky Pratama", "7A", "ahmad.rizky77@smp.belajar.id", "Smpeka#20261"],
+                ["Anisa Rahmawati", "7A", "anisa.rahmawati12@smp.belajar.id", "Smpeka#20262"],
+                ["Budi Santoso", "7B", "budi.santoso03@smp.belajar.id", "Smpeka#20263"]
+            ];
+
+            const ws = XLSX.utils.aoa_to_sheet(templateData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Format Data Siswa");
+            XLSX.writeFile(wb, "Template_Belajar_Id_SMP_Eka_Tjipta.xlsx");
+            showToast('Template Excel berhasil diunduh', 'success');
+        }
+
+        function renderAdminTable(dataToRender = null) {
+            const list = dataToRender || studentDataset;
+            const tbody = document.getElementById('studentTableBody');
+            document.getElementById('tableTotalCount').innerText = list.length;
+
+            if (list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">Belum ada data siswa. Unggah file Excel di atas.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = list.map((s, index) => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="p-3 font-semibold text-slate-400">${index + 1}</td>
+                    <td class="p-3 font-bold text-slate-900">${s.name}</td>
+                    <td class="p-3 font-medium"><span class="bg-slate-100 px-2 py-0.5 rounded border">${s.class || '-'}</span></td>
+                    <td class="p-3 font-mono text-brand-700">${s.email}</td>
+                    <td class="p-3 font-mono text-amber-800">${s.password}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="deleteStudent(${s.id})" class="text-red-500 hover:text-red-700 p-1 font-bold" title="Hapus">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterAdminTable() {
+            const query = document.getElementById('adminTableSearch').value.toLowerCase();
+            const filtered = studentDataset.filter(s => 
+                s.name.toLowerCase().includes(query) || 
+                s.email.toLowerCase().includes(query) || 
+                (s.class && s.class.toLowerCase().includes(query))
+            );
+            renderAdminTable(filtered);
+        }
+
+        function deleteStudent(id) {
+            showModal("Konfirmasi Hapus", `<p>Apakah Anda yakin ingin menghapus data siswa ini?</p>`, () => {
+                studentDataset = studentDataset.filter(s => s.id !== id);
+                saveDatasetToStorage();
+                showToast('Data siswa berhasil dihapus', 'info');
+                closeModal();
+            });
+        }
+
+        function clearAllData() {
+            showModal("Hapus Semua Data", `<p class="text-red-600 font-bold">Peringatan: Semua data siswa akan dihapus dari sistem lokal browser ini!</p>`, () => {
+                studentDataset = [];
+                saveDatasetToStorage();
+                showToast('Semua data berhasil dibersihkan', 'warning');
+                closeModal();
+            });
+        }
+
+        function addNewStudentPrompt() {
+            const bodyHtml = `
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-xs font-bold block mb-1">Nama Lengkap Siswa</label>
+                        <input type="text" id="newStudentName" class="w-full p-2 border rounded text-xs outline-none focus:border-brand-500">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold block mb-1">Kelas</label>
+                        <input type="text" id="newStudentClass" placeholder="misal: 7A" class="w-full p-2 border rounded text-xs outline-none focus:border-brand-500">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold block mb-1">Email Belajar.id</label>
+                        <input type="email" id="newStudentEmail" placeholder="nama@smp.belajar.id" class="w-full p-2 border rounded text-xs outline-none focus:border-brand-500">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold block mb-1">Kata Sandi Awal</label>
+                        <input type="text" id="newStudentPassword" value="Smpeka#2026" class="w-full p-2 border rounded text-xs outline-none focus:border-brand-500">
+                    </div>
+                </div>
+            `;
+
+            showModal("Tambah Siswa Manual", bodyHtml, () => {
+                const name = document.getElementById('newStudentName').value.trim();
+                const cls = document.getElementById('newStudentClass').value.trim();
+                const email = document.getElementById('newStudentEmail').value.trim();
+                const pwd = document.getElementById('newStudentPassword').value.trim();
+
+                if (!name || !email) {
+                    showToast('Nama dan Email wajib diisi!', 'warning');
+                    return;
+                }
+
+                studentDataset.push({
+                    id: Date.now(),
+                    name: name,
+                    class: cls || '7A',
+                    email: email,
+                    password: pwd || 'Smpeka#2026'
+                });
+
+                saveDatasetToStorage();
+                showToast(`Siswa ${name} berhasil ditambahkan`, 'success');
+                closeModal();
+            });
+        }
+
+        function generateQRCode() {
+            const currentUrl = window.location.href;
+            document.getElementById('appUrlInput').value = currentUrl;
+            document.getElementById('qrUrlLabel').innerText = currentUrl.length > 35 ? currentUrl.substring(0, 32) + '...' : currentUrl;
+
+            // Main screen QR
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = '';
+            new QRCode(qrContainer, {
+                text: currentUrl,
+                width: 140,
+                height: 140,
+                colorDark: "#0369a1",
+                colorLight: "#ffffff"
+            });
+
+            // Print screen QR
+            const printQrContainer = document.getElementById('printQrCodeContainer');
+            printQrContainer.innerHTML = '';
+            new QRCode(printQrContainer, {
+                text: currentUrl,
+                width: 200,
+                height: 200,
+                colorDark: "#0f172a",
+                colorLight: "#ffffff"
+            });
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+
+            let bgClass = "bg-slate-900 text-white";
+            let icon = "fa-info-circle";
+
+            if (type === 'success') {
+                bgClass = "bg-emerald-600 text-white";
+                icon = "fa-circle-check";
+            } else if (type === 'error') {
+                bgClass = "bg-red-600 text-white";
+                icon = "fa-circle-exclamation";
+            } else if (type === 'warning') {
+                bgClass = "bg-amber-600 text-white";
+                icon = "fa-triangle-exclamation";
+            }
+
+            toast.className = `p-3.5 rounded-xl shadow-xl flex items-center gap-3 text-xs font-bold ${bgClass} pointer-events-auto transform transition-all duration-300 translate-y-2 opacity-0`;
+            toast.innerHTML = `<i class="fa-solid ${icon} text-base"></i> <span>${message}</span>`;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', '-translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        function showModal(title, bodyHtml, onConfirm = null) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalBody').innerHTML = bodyHtml;
+            const footer = document.getElementById('modalFooter');
+
+            if (onConfirm) {
+                footer.innerHTML = `
+                    <button onclick="closeModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-lg text-xs">Batal</button>
+                    <button id="modalConfirmBtn" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg text-xs">Lanjutkan</button>
+                `;
+                document.getElementById('modalConfirmBtn').onclick = onConfirm;
+            } else {
+                footer.innerHTML = `
+                    <button onclick="closeModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-lg text-xs">Tutup</button>
+                `;
+            }
+
+            document.getElementById('customModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('customModal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
